@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import math_lib as ml
 
-def boxplot(L, xlabel=' ', ylabel=' ', title=' ', out_file_name='boxplot.png'):
+def boxplot(L,labels, xlabel=' ', ylabel=' ', title=' ', out_file_name='boxplot.png'):
     if L is None:
         raise TypeError('boxplot: No input to L')
     if not isinstance(L,list):
@@ -24,13 +24,14 @@ def boxplot(L, xlabel=' ', ylabel=' ', title=' ', out_file_name='boxplot.png'):
     if not isinstance(title, str):
         raise TypeError('boxplot: X label must be str')
         
-    fig = plt.figure()
+    fig = plt.figure(figsize=(10,5),dpi=300)
     ax = fig.add_subplot(1, 1 ,1)
     ax.title.set_text(title)
     ax.set_ylabel(ylabel)
     ax.set_xlabel(xlabel)
 
-    ax.boxplot(L)
+    ax.boxplot(L,labels=labels)
+    ax.xaxis.set_tick_params(rotation=90)
     try:
         plt.savefig(out_file_name, bbox_inches='tight')
     except ValueError:

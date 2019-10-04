@@ -15,6 +15,7 @@ class TestLinearSearch(unittest.TestCase):
     def test_hit(self):
         self.assertEqual(pgtx.linear_search(1,[1,2,3]),0)        
 
-class TestInputParsing(unittest.TestCase):
-    def test_argparse(self):
-        self.assertIsNotNone(pgtx.parse_arguments())        
+class TestSampleFile(unittest.TestCase):
+    def test_file_type(self):
+        #self.assertRaises(ValueError,pgtx.parse_sample_file,'test.png')
+        self.assertRaises(TypeError,pgtx.parse_sample_file,None)
