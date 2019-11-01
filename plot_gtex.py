@@ -1,6 +1,11 @@
 import data_viz as dv
 import argparse
 import gzip
+import sys
+
+sys.path.insert(1,"hash-tables-ocmadin")
+import hash_tables
+import hash_functions
 
 def linear_search(key, L):
     
@@ -91,40 +96,22 @@ def main():
     
     sample_info_header,samples = parse_sample_file(sample_info_file_name)
     
-    group_col_idx = linear_search(group_col_name, sample_info_header)
-    sample_id_col_idx = linear_search(sample_id_col_name, sample_info_header)
+    key = linear_search(group_col_name,sample_info_header)
     
-    groups = []
-    members = []
-    
-    for row_idx in range(len(samples)):
-        sample = samples[row_idx]
-        sample_name = sample[sample_id_col_idx]
-        curr_group = sample[group_col_idx]
-    
-        curr_group_idx = linear_search(curr_group, groups)
-    
-        if curr_group_idx == -1:
-            curr_group_idx = len(groups)
-            groups.append(curr_group)
-            members.append([])
-    
-        members[curr_group_idx].append(sample_name)
+    table = hash_tables.ChainedHash(50,hash_functions.h_rolling)
+    keys = []
+    for i in samples:
+        result = table.search(i[key])
+        if result is None:
+            table.add(i[key],[i[0]])
+            keys.append(i[key])
+        else:
+            loc = table.search_loc(i[key])
+            table.T[loc][0][1].append(i[0])
+
         
         
-    for row_idx in range(len(samples)):
-        sample = samples[row_idx]
-        sample_name = sample[sample_id_col_idx]
-        curr_group = sample[group_col_idx]
-
-        curr_group_idx = linear_search(curr_group, groups)
-    
-        if curr_group_idx == -1:
-            curr_group_idx = len(groups)
-            groups.append(curr_group)
-            members.append([])
-
-        members[curr_group_idx].append(sample_name)
+        
     
     version = None
     dim = None
@@ -132,9 +119,10 @@ def main():
     
     gene_name_col = 1
     
-    group_counts = [ [] for i in range(len(groups)) ]
+    table_2 = hash_tables.ChainedHash(10000,hash_functions.h_rolling)
     
 
+    
     for l in gzip.open(data_file_name, 'rt'):
         if version == None:
             version = l
@@ -156,15 +144,17 @@ def main():
     
         A = l.rstrip().split('\t')
     
-        if A[gene_name_col] == gene_name:
-            for group_idx in range(len(groups)):
-                for member in members[group_idx]:
-                    member_idx = binary_search(member, data_header)
-                    if member_idx != -1:
-                        group_counts[group_idx].append(int(A[member_idx]))
-            break 
+        if A[gene_name_col] == 'BRCA2':
+            for header, gene_data in zip(data_header[2:], A[2:]):
+                table_2.add(header[0],gene_data)
+    group_counts = [[] for _ in range(len(keys))]
+    for i in range(len(keys)):
+        for val in table.search(keys[i]):
+            result = table_2.search(val)
+            if result is not None:
+                group_counts[i].append(int(result))
     
-    dv.boxplot(group_counts,groups,ylabel = 'Gene Read Counts', xlabel = arguments.sample_type, title = arguments.gene, out_file_name = arguments.output_filename)
+    dv.boxplot(group_counts,keys,ylabel = 'Gene Read Counts', xlabel = arguments.sample_type, title = arguments.gene, out_file_name = arguments.output_filename)
 
 if __name__ == '__main__':
     main()
